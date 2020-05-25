@@ -5,7 +5,7 @@ A python script to easily download and rename 3GPP specification documents
 Download this in any directory and add the following into your bash.rc
 
 ```
-alias "3gpp"=/place/where/you/downloaded/3gpp
+alias 3gpp="/place/where/you/downloaded/3gpp"
 ```
 
 # How to use

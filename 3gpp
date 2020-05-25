@@ -1,0 +1,98 @@
+#!/bin/python
+
+import os
+from ftplib import FTP 
+import argparse
+import pandas as pd
+import zipfile
+
+
+RENAMING_CONVENTION = "https://www.3gpp.org/DynaReport/{:02d}-series.htm"
+BASE_3GPP_SERIES = "Specs/archive/{:02d}_series/{}"
+BASE_3GPP_FTP = 'ftp.3gpp.org'
+
+class Renamer:
+    def get_renaming(self, series):
+        data = pd.read_html(RENAMING_CONVENTION.format(series))
+        spec_n = [i.replace("TS ", "") for i in list(data[0]['spec number'])]
+        spec_title = [i.replace(" ", "_") for i in list(data[0]['title'])]
+
+        ret = {}
+        for document, title in zip(spec_n, spec_title):
+            if "TS" in document:
+                document = document.replace("TS ", "")
+            if "TR" in document:
+                document = document.replace("TR ", "")
+            ret[document] = title
+        return ret
+
+class Downloader:
+    def __init__(self):
+        self.ftp = FTP('ftp.3gpp.org') 
+        self.ftp.login()
+        self.renamer = Renamer()
+
+    def __del__(self):
+        self.ftp.quit()
+
+    def unzip(self, path_to_zip_file, directory_to_extract_to):
+        with zipfile.ZipFile(path_to_zip_file, 'r') as zip_ref:
+            zip_ref.extractall(directory_to_extract_to)
+
+    def get_series(self, document):
+        if "." not in document:
+            raise ValueError("Invalid document number")
+        [series_number, _] = document.split(".")
+        return int(series_number)
+
+    def get(self, document):
+        series_number = self.get_series(document)
+        print("Gettting document ", document, "from series", series_number)
+
+        versions_path = BASE_3GPP_SERIES.format(
+            series_number, 
+            document)
+
+        try:
+            # Download the latest file, latest is always the last
+            document_versions = self.ftp.nlst(versions_path)
+            document_path = document_versions[-1]
+            target_file = document_path.split("/")[-1]
+        except:
+            print("Could not find the specification you selected")
+            return
+
+        try:
+            destiny = "/tmp/{}.zip".format(document)
+            print("Downloding file to {}".format(destiny))
+            with open(destiny, "wb") as fp:
+                self.ftp.retrbinary('RETR {}'.format(document_path), fp.write)
+        except:
+            print("Could not download the Specification")
+
+        renaming = self.renamer.get_renaming(series_number)
+        curr_name = target_file.replace(".zip", ".doc")
+        new_name = "{}-{}.doc".format(document, renaming[document])
+
+        is_zip = ".zip" in document_path
+        if is_zip:
+            print("Unpacking file into ", new_name)
+            self.unzip(destiny, ".")
+
+        os.rename(curr_name, new_name)
+        
+def main(document):
+    dwl = Downloader()
+    dwl.get(document)
+
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description='Download or list 3GPP specifications')
+
+    parser.add_argument('document', metavar='S', type=str, nargs=1,
+                   help='The document number, Ex: 21.401')
+
+    args = parser.parse_args()
+    main.main(args.document[0])

@@ -39,7 +39,8 @@ class Downloader:
         with zipfile.ZipFile(path_to_zip_file, 'r') as zip_ref:
             zip_ref.extractall(directory_to_extract_to)
 
-    def get_series(self, document):
+    @classmethod
+    def get_series(cls, document):
         if "." not in document:
             raise ValueError("Invalid document number")
         [series_number, _] = document.split(".")
@@ -71,6 +72,8 @@ class Downloader:
             print("Could not download the Specification")
 
         renaming = self.renamer.get_renaming(series_number)
+
+        #TODO this will fail if the content is a .docx
         curr_name = target_file.replace(".zip", ".doc")
         new_name = "{}-{}.doc".format(document, renaming[document])
 
@@ -80,10 +83,6 @@ class Downloader:
             self.unzip(destiny, ".")
 
         os.rename(curr_name, new_name)
-        
-def main(document):
-    dwl = Downloader()
-    dwl.get(document)
 
 
 
@@ -92,7 +91,22 @@ if __name__ == '__main__':
         description='Download or list 3GPP specifications')
 
     parser.add_argument('document', metavar='S', type=str, nargs=1,
-                   help='The document number, Ex: 21.401')
+                   help='The document number, Ex: 21.978')
+    parser.add_argument('-n', '--name', action='store_const', dest='only_name', const=True,
+                   help='shown only the name of a document (Ex: 21.978)')
+
 
     args = parser.parse_args()
-    main(args.document[0])
+    document = args.document[0]
+    only_name = args.only_name
+
+    #print(args)
+    if only_name:
+        try:
+            series = Downloader.get_series(document)
+            naming_dict = Renamer().get_renaming(series)
+            print("{}-{}".format(document, naming_dict[document]))
+        except:
+            print("Specification ID not found")
+    else:
+        Downloader().get(document)

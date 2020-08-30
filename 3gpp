@@ -65,23 +65,30 @@ class Downloader:
 
         try:
             destiny = "/tmp/{}.zip".format(document)
-            print("Downloding file to {}".format(destiny))
+            print("Downloading file to {}".format(destiny))
             with open(destiny, "wb") as fp:
                 self.ftp.retrbinary('RETR {}'.format(document_path), fp.write)
         except:
             print("Could not download the Specification")
 
-        renaming = self.renamer.get_renaming(series_number)
-
-        #TODO this will fail if the content is a .docx
-        curr_name = target_file.replace(".zip", ".doc")
-        new_name = "{}-{}.doc".format(document, renaming[document])
-
+	# Unzip in the local folder
         is_zip = ".zip" in document_path
         if is_zip:
-            print("Unpacking file into ", new_name)
+            print("Unpacking file into localfolder from: ", destiny)
             self.unzip(destiny, ".")
 
+	# Rename the downloaded file
+        renaming = self.renamer.get_renaming(series_number)
+        if os.path.isfile(target_file.replace(".zip", ".doc")):
+            ext = ".doc"
+        elif os.path.isfile(target_file.replace(".zip", ".docx")):
+            ext = ".docx"
+        else:
+            print("Could not find valid extension, expected .doc or .docx")
+
+        new_name = "{}-{}.{}".format(document, renaming[document], ext)
+        curr_name = target_file.replace(".zip", ext)
+        print("Created file: {}".format(new_name))
         os.rename(curr_name, new_name)
 
 

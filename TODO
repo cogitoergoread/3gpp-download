@@ -1,3 +1,2 @@
-- [ ] Handle the zip files with .docx
+- [x] Handle the zip files with .docx
 - [ ] Assure the system has ftplib, pandas, zipfile
-- [ ]

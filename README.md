@@ -2,6 +2,12 @@ A python script to easily download and rename 3GPP specification documents
 
 # How to install
 
+Install pandas with PIP
+
+```
+pip install pandas
+```
+
 Download this in any directory and add the following into your bash.rc
 
 ```

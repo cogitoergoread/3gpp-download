@@ -1,2 +1,4 @@
 - [x] Handle the zip files with .docx
-- [ ] Assure the system has ftplib, pandas, zipfile
+- [x] Assure the system has ftplib, pandas, zipfile
+- [x] Rel 16 Doc retrieve
+- [x] Rename based on Rubin std filnames

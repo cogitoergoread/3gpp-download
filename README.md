@@ -1,11 +1,12 @@
+
 A python script to easily download and rename 3GPP specification documents
 
 # How to install
 
 Install requirements
 
-```
-pip install pandas lxml
+``` shell
+pip install -r requirements.txt
 ```
 
 Download this in any directory and add the following into your bash.rc

@@ -1,4 +1,4 @@
-#!python3
+#!/home/muszi/gwork/3gpp-env/bin/python
 
 import os
 from ftplib import FTP 
@@ -23,7 +23,9 @@ class Renamer:
                 document = document.replace("TS ", "")
             if "TR" in document:
                 document = document.replace("TR ", "")
-            ret[document] = title
+            mytitle = title.replace(";", "")
+            # print (f'Document: {document}, Document title:{mytitle}')
+            ret[document] = mytitle
         return ret
 
 class Downloader:
@@ -53,15 +55,30 @@ class Downloader:
         versions_path = BASE_3GPP_SERIES.format(
             series_number, 
             document)
+        print(f'Versions path:{versions_path}')
 
         try:
             # Download the latest file, latest is always the last
             document_versions = self.ftp.nlst(versions_path)
-            document_path = document_versions[-1]
-            target_file = document_path.split("/")[-1]
         except:
-            print("Could not find the specification you selected")
+            print("Could not retrieve list of files")
             return
+        
+        # document_path = document_versions[-1]
+        doc_select='0000'
+        doc_req=document.replace('.','')
+        for docelem in document_versions:
+            target_file = docelem.split("/")[-1]
+            if (target_file[:5] == doc_req) & (target_file[5:7] == '-g'):
+                # Matches for Rel 16 format -g00
+                if doc_select < target_file:
+                    doc_select = target_file
+                    document_path = docelem
+        # target_file = document_path.split("/")[-1]
+        target_file = doc_select
+        print(f'Target File: {target_file}')
+        print(f'3GPP path: {document_path}')
+
 
         try:
             destiny = "/tmp/{}.zip".format(document)
@@ -86,7 +103,7 @@ class Downloader:
         else:
             print("Could not find valid extension, expected .doc or .docx")
 
-        new_name = "{}-{}.{}".format(document, renaming[document], ext)
+        new_name = "{}-{}{}".format(document, renaming[document], ext)
         curr_name = target_file.replace(".zip", ext)
         print("Created file: {}".format(new_name))
         os.rename(curr_name, new_name)
